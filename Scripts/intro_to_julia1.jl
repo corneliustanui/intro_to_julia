@@ -13,7 +13,7 @@
 root = dirname(@__FILE__)
 
 # to concat current root dir with a file
-joinpath(root, "project1.jl")
+joinpath(root, "intro_to_julia1.jl")
 
 # install packages
 using Pkg # package management package, or package for installing other packages
