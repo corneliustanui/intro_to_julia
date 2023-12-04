@@ -27,6 +27,8 @@ Pkg.add("Markdown") # Report generation
 Pkg.add("StatsPlots") # For representing various plots
 Pkg.add("Distributions") # For random variable creation 
 Pkg.add("StatsBase") # For basic statistical operations 
+Pkg.add("GLM") # For linear models
+Pkg.add("StatsBase") # for statistical functions
 
 # load packages
 using CSV # load CSV package,  
@@ -38,6 +40,8 @@ using Random: seed!
 using Markdown
 using StatsPlots  
 using Distributions  
+using StatsBase
+using GLM
 using StatsBase
 
 # all palckages can be loaded in one line 
@@ -101,8 +105,7 @@ unique([STIData1.IdNumber, STIData1.Sex])
 # deselect a few columns, 
 STIData2 = select(
     STIData1,
-    Not(:IdNumber, :CaseStatus, :Date, :A1Age
-    )
+    Not(:IdNumber, :CaseStatus, :Date, :A1Age)
 )
 
 # rename columns (similar to 'select' syntax)
@@ -126,6 +129,22 @@ STIData2 = select(
 )
 
 # clean string variables
+first(STIData2, 6)
+
+# function to remove numbers and space, and convert to upper case
+remove_nums_and_space = function (x)
+    x1 = replace(x, r"[\d|\s]" => "") |>
+    uppercase
+    return x1
+end
+
+STIData2.occupation = remove_nums_and_space.(STIData2.occupation)
+STIData2.church = remove_nums_and_space.(STIData2.church)
+STIData2.level_education = remove_nums_and_space.(STIData2.level_education)
+STIData2.marital_status = remove_nums_and_space.(STIData2.marital_status)
+STIData2.used_condom = remove_nums_and_space.(STIData2.used_condom)
+STIData2.taken_alcohol = remove_nums_and_space.(STIData2.taken_alcohol)
+# STIData2.type_sti = replace(STIData2.type_sti, r"\s" => "")
 
 # clean categorical variables 
 
@@ -181,3 +200,123 @@ span(STIData2.age) # same as max - min
 # 5) Two-way tables, with hypothesis testing 
 
 # INFERENTIAL ANALYSIS
+# 1) Linear regression
+fm = @formula(weight ~ age + height + sex)
+lr_m1 = lm(fm, STIData2)
+
+# 2) Negative Binominal
+nbr_m1 = glm(
+    @formula(duration_illness ~ age + weight + height + sex), 
+    STIData2, 
+    NegativeBinomial(), 
+    LogLink()
+)
+
+# 3) Poisson regression
+po_m1 = glm(
+    @formula(duration_illness ~ age + weight + height + sex), 
+    STIData2, 
+    Poisson()
+)
+
+# VISUALISATION
+# check outliers
+boxplot1 = Plots.boxplot(
+    STIData2.age, 
+    title = "Box Plot - Age", 
+    ylabel = "Age (years)", 
+    legend = false
+)
+
+savefig(boxplot1,"./Graphs/Boxplot1.png")
+
+# scatter plot 
+scatter1 = Plots.scatter(
+    STIData2.height,
+    STIData2.weight,  
+    title = "Scatter Plot Height vs Weight", 
+    xlabel = "Height(cm)",
+    ylabel = "Weight(Kg)", 
+    legend = false
+)
+
+savefig(scatter1,"./Graphs/Scatter1.png")
+
+# histogram
+histogram1 = Plots.histogram(
+    STIData2.weight, 
+    title = "Density Plot - Weight", 
+    ylabel = "Frequency", 
+    xlabel = "Weight(Kgs)", 
+    legend = false,
+    color = "gold"
+)
+
+savefig(histogram1,"./Graphs/Histogram1.png")
+
+# density plot
+density1 = Plots.density(
+    STIData2.age , 
+    title = "Density Plot - Age", 
+    ylabel = "Frequency", 
+    xlabel = "Age(years)", 
+    legend = false,
+    color = "green"
+)
+
+savefig(density1,"./Graphs/Density1.png")
+
+density2 = Plots.density(
+    STIData2.weight , 
+    title = "Density Plot - Weight", 
+    ylabel = "Frequency", 
+    xlabel = "Weight(Kgs)", 
+    legend = false,
+    color = "#3055"
+)
+
+savefig(density2,"./Graphs/Density2.png")
+
+# combining Graphs
+boxplot1 = Plots.density!(
+    STIData2.age, 
+    title = "Box Plot - Age", 
+    ylabel = "Age (year)", 
+    legend = true
+)
+
+boxplot1 = Plots.density!(
+    STIData2.weight, 
+    title = "Box Plot - Weight", 
+    ylabel = "Weight (Kgs)", 
+    legend = true
+)
+
+# bar graph1
+first(STIData2, 6)
+
+bar1 = Plots.bar(
+    STIData2.level_education,
+    STIData2.duration_illness,
+    title = "Box Plot - Weight", 
+    ylabel = "Weight (Kgs)", 
+    legend = false
+)
+
+savefig(bar1,"./Graphs/Bar1.png")
+
+# bar graph2
+bar2 = Plots.bar(
+    STIData2.sex,
+    [STIData2.age, STIData2.height],
+    title = "Box Plot - Weight", 
+    ylabel = "Weight (Kgs)", 
+    legend = true,
+    label = ["Age" "Duration of Illness"]
+)
+
+savefig(bar2,"./Graphs/Bar2.png")
+
+# bar graph2
+
+# bar graph3
