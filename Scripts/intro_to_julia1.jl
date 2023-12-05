@@ -28,7 +28,8 @@ Pkg.add("StatsPlots") # For representing various plots
 Pkg.add("Distributions") # For random variable creation 
 Pkg.add("StatsBase") # For basic statistical operations 
 Pkg.add("GLM") # For linear models
-Pkg.add("StatsBase") # for statistical functions
+Pkg.add("Pipe") # for piping functions
+Pkg.add("Statistics")
 
 # load packages
 using CSV # load CSV package,  
@@ -40,9 +41,10 @@ using Random: seed!
 using Markdown
 using StatsPlots  
 using Distributions  
-using StatsBase
 using GLM
 using StatsBase
+using Pipe
+using Statistics
 
 # all palckages can be loaded in one line 
 # using CSV, DataFrames, Plots
@@ -100,8 +102,6 @@ unique([STIData1.IdNumber, STIData1.Sex])
 # 5) Identify duplicates
 
 
-
-
 # deselect a few columns, 
 STIData2 = select(
     STIData1,
@@ -145,6 +145,9 @@ STIData2.marital_status = remove_nums_and_space.(STIData2.marital_status)
 STIData2.used_condom = remove_nums_and_space.(STIData2.used_condom)
 STIData2.taken_alcohol = remove_nums_and_space.(STIData2.taken_alcohol)
 # STIData2.type_sti = replace(STIData2.type_sti, r"\s" => "")
+
+# save clean data set
+CSV.write("./Data/Clean_STIData.csv", STIData2)
 
 # clean categorical variables 
 
@@ -219,7 +222,7 @@ po_m1 = glm(
     Poisson()
 )
 
-# VISUALISATION
+# VISUALISATION - Using Plots module
 # check outliers
 boxplot1 = Plots.boxplot(
     STIData2.age, 
@@ -232,9 +235,9 @@ savefig(boxplot1,"./Graphs/Boxplot1.png")
 
 # scatter plot 
 scatter1 = Plots.scatter(
-    STIData2.height,
-    STIData2.weight,  
-    title = "Scatter Plot Height vs Weight", 
+    STIData2.weight,
+    STIData2.height,  
+    title = "Scatter Plot Weight vs Height", 
     xlabel = "Height(cm)",
     ylabel = "Weight(Kg)", 
     legend = false
@@ -245,7 +248,7 @@ savefig(scatter1,"./Graphs/Scatter1.png")
 # histogram
 histogram1 = Plots.histogram(
     STIData2.weight, 
-    title = "Density Plot - Weight", 
+    title = "Histogram Plot - Weight", 
     ylabel = "Frequency", 
     xlabel = "Weight(Kgs)", 
     legend = false,
@@ -280,14 +283,14 @@ savefig(density2,"./Graphs/Density2.png")
 # combining Graphs
 boxplot1 = Plots.density!(
     STIData2.age, 
-    title = "Box Plot - Age", 
+    title = "Denisty Plot - Age", 
     ylabel = "Age (year)", 
     legend = true
 )
 
 boxplot1 = Plots.density!(
     STIData2.weight, 
-    title = "Box Plot - Weight", 
+    title = "Density Plot - Weight", 
     ylabel = "Weight (Kgs)", 
     legend = true
 )
@@ -298,7 +301,7 @@ first(STIData2, 6)
 bar1 = Plots.bar(
     STIData2.level_education,
     STIData2.duration_illness,
-    title = "Box Plot - Weight", 
+    title = "Bar Graph - Weight", 
     ylabel = "Weight (Kgs)", 
     legend = false
 )
@@ -309,7 +312,7 @@ savefig(bar1,"./Graphs/Bar1.png")
 bar2 = Plots.bar(
     STIData2.sex,
     [STIData2.age, STIData2.height],
-    title = "Box Plot - Weight", 
+    title = "Bar Grpah - Weight", 
     ylabel = "Weight (Kgs)", 
     legend = true,
     label = ["Age" "Duration of Illness"]
@@ -320,3 +323,17 @@ savefig(bar2,"./Graphs/Bar2.png")
 # bar graph2
 
 # bar graph3
+
+# pie chart 1
+pie1_data = groupby(STIData2, :church)
+pie1_data_grp_mean = combine(pie1_data, :weight => mean => :mean_weight)
+
+pie1 = Plots.pie(
+    pie1_data_grp_mean.church,
+    pie1_data_grp_mean.mean_weight,
+    title = "Pie Chart - Mean Weight by Sex", 
+    legend = true
+)
+
+savefig(pie1,"./Graphs/Pie1.png")
+
